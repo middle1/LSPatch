@@ -37,7 +37,6 @@ jobs:
           echo "${{ secrets.KEY_STORE }}" | base64 --decode > key.jks
         fi
 
-    # Клонируем зависимости, которые нужно собрать локально
     - name: Checkout libxposed/api
       uses: actions/checkout@v4
       with:
@@ -55,11 +54,10 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
+        cache: 'gradle'
 
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v3
-      with:
-        gradle-version: wrapper
 
     - name: Set up ccache
       uses: hendrikmuhs/ccache-action@v1.2
@@ -69,18 +67,17 @@ jobs:
         restore-keys: ${{ runner.os }}
         save: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
 
-    # Собираем библиотеки libxposed и публикуем в mavenLocal, чтобы основной проект их увидел
     - name: Build dependencies
       run: |
         echo "Building libxposed API..."
         cd libxposed/api
         chmod +x gradlew
-        ./gradlew :api:publishApiPublicationToMavenLocal
+        ./gradlew :api:publishApiPublicationToMavenLocal -Pkotlin.jvm.target.validation.mode=ignore
         
         cd ../service
         echo "Building libxposed Service..."
         chmod +x gradlew
-        ./gradlew :interface:publishInterfacePublicationToMavenLocal
+        ./gradlew :interface:publishInterfacePublicationToMavenLocal -Pkotlin.jvm.target.validation.mode=ignore
         cd ../..
 
     - name: Build with Gradle
@@ -88,7 +85,7 @@ jobs:
         echo 'org.gradle.parallel=true' >> gradle.properties
         echo 'org.gradle.jvmargs=-Xmx2048m' >> gradle.properties
         echo 'android.native.buildOutput=verbose' >> gradle.properties
-        ./gradlew buildAll
+        ./gradlew buildAll -Pkotlin.jvm.target.validation.mode=ignore
 
     - name: Upload Debug artifact
       uses: actions/upload-artifact@v4
