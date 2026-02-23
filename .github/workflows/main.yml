@@ -49,10 +49,11 @@ jobs:
         repository: libxposed/service
         path: libxposed/service
 
+    # Устанавливаем Java 21, чтобы удовлетворить требования libxposed/service
     - name: Setup Java
       uses: actions/setup-java@v4
       with:
-        java-version: '17'
+        java-version: '21'
         distribution: 'temurin'
         cache: 'gradle'
 
@@ -69,6 +70,7 @@ jobs:
 
     - name: Build dependencies
       run: |
+        # Используем Java 21 для сборки зависимостей
         echo "Building libxposed API..."
         cd libxposed/api
         chmod +x gradlew
@@ -85,6 +87,7 @@ jobs:
         echo 'org.gradle.parallel=true' >> gradle.properties
         echo 'org.gradle.jvmargs=-Xmx2048m' >> gradle.properties
         echo 'android.native.buildOutput=verbose' >> gradle.properties
+        # Основной проект соберется на Java 21 без проблем, так как она совместима с Java 17
         ./gradlew buildAll -Pkotlin.jvm.target.validation.mode=ignore
 
     - name: Upload Debug artifact
